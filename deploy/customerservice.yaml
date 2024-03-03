@@ -1,0 +1,93 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: customerservice
+  labels:
+    app: customer
+spec:
+  selector:
+    app: customer
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customerservice
+  labels:
+    app: customer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer
+  template:
+    metadata:
+      labels:
+        app: customer
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "customerservice"
+        dapr.io/app-port: "3000"
+        dapr.io/enable-api-logging: "true"
+    spec:
+      containers:
+      - name: customer
+        image: yungsnow/customerservice
+        env:
+        - name: DB_HOST
+          value: "customerdatabase"
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: customerdatabase
+  labels:
+    app: customerdb
+spec:
+  selector:
+    app: customerdb
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customerdatabase
+  labels:
+    app: customerdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customerdb
+  template:
+    metadata:
+      labels:
+        app: customerdb
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "customerdatabase"
+        dapr.io/app-port: "3306"
+    spec:
+      containers:
+      - name: customerdb
+        image: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "my-secret-pw"
+        - name: MYSQL_DATABASE
+          value: "microservices-test"
+        ports:
+        - containerPort: 3306
+        imagePullPolicy: Always

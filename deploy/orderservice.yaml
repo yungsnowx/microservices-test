@@ -1,0 +1,93 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: orderservice
+  labels:
+    app: order
+spec:
+  selector:
+    app: order
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderservice
+  labels:
+    app: order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "orderservice"
+        dapr.io/app-port: "3000"
+        dapr.io/enable-api-logging: "true"
+    spec:
+      containers:
+      - name: order
+        image: yungsnow/orderservice
+        env:
+        - name: DB_HOST
+          value: "orderdatabase"
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: orderdatabase
+  labels:
+    app: orderdb
+spec:
+  selector:
+    app: orderdb
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderdatabase
+  labels:
+    app: orderdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orderdb
+  template:
+    metadata:
+      labels:
+        app: orderdb
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "orderdatabase"
+        dapr.io/app-port: "3306"
+    spec:
+      containers:
+      - name: orderdb
+        image: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "my-secret-pw"
+        - name: MYSQL_DATABASE
+          value: "microservices-test"
+        ports:
+        - containerPort: 3306
+        imagePullPolicy: Always

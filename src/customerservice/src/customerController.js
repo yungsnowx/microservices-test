@@ -30,7 +30,7 @@ async function deleteCustomerAction(request, response) {
 
 async function addOrderToCustomerAction(request, response) {
     const jsonObject = readOrderFromRequest(request);
-    await axios.post(`http://${process.env.ORDERSERVICE || "orderservice"}:3003/orders`, jsonObject)
+    await axios.post(`http://localhost:3500/orders`, jsonObject, {headers: { 'dapr-app-id ': 'orderservice' }})
         .then(postResponse => {
             console.log(postResponse.data);
             response.json(postResponse.data);
