@@ -4,7 +4,7 @@ services:
     build:
       context: src/customerservice
     ports:
-      - 3002:3002
+      - 3002:3000
     environment:
       - DB_HOST=customerdb
     depends_on:
@@ -14,7 +14,7 @@ services:
     build:
       context: src/orderservice
     ports:
-      - 3003:3003
+      - 3003:3000
     environment:
       - DB_HOST=orderdb
     depends_on:
